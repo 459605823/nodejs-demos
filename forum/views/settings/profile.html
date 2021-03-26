@@ -1,0 +1,114 @@
+{{extend '../_layouts/home.html'}}
+
+{{block 'title'}}{{'多人博客 - 首页'}}{{/block}}
+{{block 'head'}}
+<style>
+  #preview {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 20px;
+  }
+  #choosePic {
+    margin-bottom: 20px;
+  }
+</style>
+{{/block}}
+{{block 'body'}}
+<section class="container">
+  {{include '../_partials/settings-nav.html'}}
+  <div class="col-md-5">
+    <form id="setting-form">
+      <div class="form-group">
+        <label for="email">账号</label>
+        <input class="form-control-static" name="email" id="email" value='{{ user.email }}' readonly></input>
+      </div>
+      <div class="form-group">
+        <label for="nickname">昵称</label>
+        <input type="text" class="form-control" id="nickname" placeholder="" name="nickname" value="{{ user.nickname }}">
+      </div>
+      <div class="form-group">
+        <label for="bio">介绍</label>
+        <textarea class="form-control" rows="3" id="bio" name="bio">{{user.bio}}</textarea>
+      </div>
+      <div class="form-group">
+        <label for="gender">性别</label>
+        <div>
+          <label class="radio-inline">
+            <input type="radio" name="gender" id="inlineRadio1" value="0"> 男
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="gender" id="inlineRadio2" value="1"> 女
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="gender" id="inlineRadio3" value="-1"> 保密
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="birth">生日</label>
+        <input type="date" class="form-control" id="birth" placeholder="" name="birthday" value="{{ user.birthday }}">
+      </div>
+      <div class="form-group">
+        <img src="{{ user.avatar }}" alt="" id="preview">
+        <input type="file" id="choosePic" name="avatar">
+        <input type="button" id="uploadPic" value="上传图片">
+      </div>
+      <button type="submit" class="btn btn-success">保存</button>
+    </form>
+  </div>
+</section>
+{{/block}}
+
+{{block 'script'}}
+<script>
+  var file = null
+    $('#choosePic').change(function(e){
+      var target = e.target || e.srcElement
+      file = target.files[0]
+      var reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = function() {
+        $('#preview').attr('src', this.result)
+      }
+    })
+    $('#uploadPic').click(function() {
+      var formData = new FormData()
+      formData.append("img", file)
+      $.ajax({
+        url: '/uploadAvatar',
+        type: 'POST',
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(data) {
+          var err_code = data.err_code
+          if (err_code === 0) {
+            alert('上传成功')
+          } else {
+            alert('上传失败')
+          }
+        }
+      })
+    })
+    $('#setting-form').on('submit', function (e) {
+      e.preventDefault()
+      var formData = $(this).serialize()
+      $.ajax({
+        url: '/settings/profile',
+        type: 'post',
+        data: formData,
+        dataType: 'json',
+        success: function (data) {
+          var err_code = data.err_code
+          if (err_code === 0) {
+            // 服务端重定向针对异步请求无效
+            alert('更改成功')
+          } else if (err_code === 500) {
+            window.alert('服务器忙，请稍后重试！')
+          }
+        }
+      })
+    })
+</script>
+{{/block}}
